@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "25959481349",
+    "project_id": "quickbudget-d7a10",
+    "storage_bucket": "quickbudget-d7a10.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25959481349:android:68de4f7f5acd859d735c6c",
+        "android_client_info": {
+          "package_name": "com.example.quickbudget"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhm0zHzQPVAzEfF_U8wQVd3zQA0z2uZiY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

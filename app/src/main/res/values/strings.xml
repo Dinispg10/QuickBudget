@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">QuickBudget</string>
+    <string name="app_icon">Ícone da app</string>
+
+
+    <string-array name="tipos_recorrencia">
+        <item>Selecione a recorrência</item>
+        <item>Nenhuma</item>
+        <item>Semanal</item>
+        <item>Mensal</item>
+    </string-array>
+
+
+    <string-array name="categorias_array">
+        <item>Selecione a categoria</item>
+        <item>Alimentação</item>
+        <item>Transporte</item>
+        <item>Lazer</item>
+        <item>Saúde</item>
+        <item>Casa</item>
+        <item>Educação</item>
+        <item>Supermercado</item>
+        <item>Subscrição</item>
+        <item>Outro</item>
+    </string-array>
+
+    <string name="hint_recorrencia">Selecione a recorrência</string>
+
+    <string name="label_categorias">Categoria</string>
+    <string name="label_recorrencia">Recorrência</string>
+
+</resources>

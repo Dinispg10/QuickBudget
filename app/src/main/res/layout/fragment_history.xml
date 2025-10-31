@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_color">
+
+    <!-- 🔹 Toolbar topo -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_history"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/primary_color"
+        android:elevation="4dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_app_logo"
+            android:contentDescription="App logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Histórico"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- 🔹 Conteúdo principal -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Título da semana -->
+            <TextView
+                android:id="@+id/textViewHistorySummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Resumo da Semana"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Estado (dentro / fora do orçamento) -->
+            <TextView
+                android:id="@+id/textViewStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="12dp"
+                android:textColor="@android:color/holo_green_dark" />
+
+            <!-- Linha 1: Orçamento semanal -->
+            <TextView
+                android:id="@+id/textViewWeeklyBudget"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Orçamento semanal: €0.00"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Linha 2: Total gasto -->
+            <TextView
+                android:id="@+id/textViewTotalSpent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total gasto: €0.00"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Linha 3: Diferença -->
+            <TextView
+                android:id="@+id/textViewDifference"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Saldo: €0.00"
+                android:textSize="16sp"
+                android:layout_marginBottom="4dp"
+                android:textColor="@android:color/holo_green_dark" />
+
+            <!-- Linha 4: Média diária -->
+            <TextView
+                android:id="@+id/textViewAverage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Média diária: €0.00"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Separador -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#DDD"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Título da lista -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Despesas da Semana"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- RecyclerView das despesas -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewWeekExpenses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical" />
+
+            <!-- Título do gráfico -->
+            <TextView
+                android:id="@+id/textViewChartTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Comparação Semanal"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Gráfico de barras -->
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/barChartWeeks"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginBottom="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,5 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_dashboard" android:title="Dashboard" android:icon="@drawable/ic_dashboard"/>
+    <item android:id="@+id/menu_add" android:title="Add Despesa" android:icon="@drawable/ic_add"/>
+    <item android:id="@+id/menu_history" android:title="Histórico" android:icon="@drawable/ic_history"/>
+</menu>
