@@ -30,7 +30,7 @@ public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_expense, parent, false);
+                .inflate(R.layout.item_despesa, parent, false);
         return new VH(v);
     }
     @Override

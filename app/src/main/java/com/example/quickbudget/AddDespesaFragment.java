@@ -28,7 +28,7 @@ public class AddDespesaFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_add_expense, container, false);
+        View view = inflater.inflate(R.layout.fragment_add_despesa, container, false);
 
         editDescricao = view.findViewById(R.id.editTextDescription);
         editValor = view.findViewById(R.id.editTextAmount);
@@ -60,13 +60,13 @@ public class AddDespesaFragment extends Fragment {
         adapterRecorrencia.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerRecorrencia.setAdapter(adapterRecorrencia);
         spinnerRecorrencia.setSelection(0, false);
-
     }
 
     private void setupButton() {
         buttonGuardar.setOnClickListener(v -> {
             String descricao = editDescricao.getText().toString().trim();
             String valorStr = editValor.getText().toString().trim();
+
             if (TextUtils.isEmpty(descricao)) {
                 editDescricao.setError("Insere uma descrição");
                 return;
@@ -75,14 +75,14 @@ public class AddDespesaFragment extends Fragment {
                 editValor.setError("Insere um valor");
                 return;
             }
+
             double valor;
             try {
-                valor = Double.parseDouble(valorStr);
+                valor = Double.parseDouble(valorStr.replace(",", "."));
             } catch (NumberFormatException e) {
                 editValor.setError("Valor inválido");
                 return;
             }
-
 
             String categoria = spinnerCategoria.getSelectedItem().toString();
             String recorrencia = spinnerRecorrencia.getSelectedItem().toString();
@@ -96,6 +96,7 @@ public class AddDespesaFragment extends Fragment {
                 return;
             }
 
+            // ✅ Agora guarda a despesa na base de dados com o DAO
             Despesa nova = new Despesa(
                     descricao,
                     categoria,
@@ -103,14 +104,21 @@ public class AddDespesaFragment extends Fragment {
                     System.currentTimeMillis(),
                     recorrencia
             );
-            DespesaStorage.salvarDespesa(requireContext(), nova);
 
-            Toast.makeText(requireContext(), "Despesa guardada com sucesso!", Toast.LENGTH_SHORT).show();
+            DespesaDAO dao = new DespesaDAO(requireContext());
+            long idInserido = dao.inserir(nova);
+            dao.fechar();
 
-            editDescricao.setText("");
-            editValor.setText("");
-            spinnerCategoria.setSelection(0);
-            spinnerRecorrencia.setSelection(0);
+            if (idInserido != -1) {
+                Toast.makeText(requireContext(), "Despesa guardada com sucesso!", Toast.LENGTH_SHORT).show();
+
+                editDescricao.setText("");
+                editValor.setText("");
+                spinnerCategoria.setSelection(0);
+                spinnerRecorrencia.setSelection(0);
+            } else {
+                Toast.makeText(requireContext(), "Erro ao guardar despesa!", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

@@ -5,10 +5,10 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.ArrayAdapter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,16 +17,18 @@ import androidx.fragment.app.DialogFragment;
 import java.util.Arrays;
 
 public class DetalheDespesaDialogFragment extends DialogFragment {
+
     public interface OnDespesaAlteradaListener { void onDespesaAlterada(); }
 
     private OnDespesaAlteradaListener listener;
     private static final String ARG_ID = "arg_id";
     private Despesa despesa;
 
-    public static DetalheDespesaDialogFragment nova(String idDespesa) {
+    // ✅ Agora recebe um int em vez de String
+    public static DetalheDespesaDialogFragment nova(int idDespesa) {
         DetalheDespesaDialogFragment f = new DetalheDespesaDialogFragment();
         Bundle b = new Bundle();
-        b.putString(ARG_ID, idDespesa);
+        b.putInt(ARG_ID, idDespesa);
         f.setArguments(b);
         return f;
     }
@@ -60,18 +62,15 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
         recAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerRecorrencia.setAdapter(recAdapter);
 
-        // Obter despesa selecionada
-        String id = getArguments() != null ? getArguments().getString(ARG_ID) : null;
-        if (id != null) {
-            for (Despesa d : DespesaStorage.getDespesas(requireContext())) {
-                if (id.equals(d.getId())) {
-                    despesa = d;
-                    break;
-                }
-            }
+        // 📦 Obter despesa da base de dados
+        int id = getArguments() != null ? getArguments().getInt(ARG_ID, -1) : -1;
+        if (id != -1) {
+            DespesaDAO dao = new DespesaDAO(requireContext());
+            despesa = dao.obterPorId(id);
+            dao.fechar();
         }
 
-        // Preencher se encontrada
+        // Preencher campos se encontrada
         if (despesa != null) {
             editDescricao.setText(despesa.getDescricao());
             editValor.setText(String.valueOf(despesa.getValor()));
@@ -87,18 +86,18 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
 
         // Criar diálogo
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setTitle("Detalhe despesa")
+                .setTitle("Detalhe da despesa")
                 .setView(view)
                 .setPositiveButton("Guardar", null)
                 .setNegativeButton("Cancelar", null)
                 .setNeutralButton("Eliminar", null)
                 .create();
 
-        // Controlar cliques manualmente (para validar antes de fechar)
         dialog.setOnShowListener(d -> {
             Button btnGuardar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             Button btnEliminar = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
 
+            // 🟢 Guardar alterações
             btnGuardar.setOnClickListener(v -> {
                 if (despesa == null) {
                     editDescricao.setError("Despesa não encontrada");
@@ -134,14 +133,22 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                 despesa.setCategoria(categoria);
                 despesa.setRecorrencia(recorrencia);
 
-                DespesaStorage.atualizarDespesa(requireContext(), despesa);
+                // Atualizar na BD
+                DespesaDAO dao = new DespesaDAO(requireContext());
+                dao.atualizar(despesa);
+                dao.fechar();
+
                 if (listener != null) listener.onDespesaAlterada();
                 dialog.dismiss();
             });
 
+            // 🔴 Eliminar despesa
             btnEliminar.setOnClickListener(v -> {
                 if (despesa != null) {
-                    DespesaStorage.eliminarDespesa(requireContext(), despesa.getId());
+                    DespesaDAO dao = new DespesaDAO(requireContext());
+                    dao.eliminar(despesa.getId());
+                    dao.fechar();
+
                     if (listener != null) listener.onDespesaAlterada();
                 }
                 dialog.dismiss();

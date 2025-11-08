@@ -6,6 +6,7 @@
     android:orientation="vertical"
     android:background="#F9FAFB">
 
+    <!-- 🔹 Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_dashboard"
         android:layout_width="match_parent"
@@ -31,8 +32,19 @@
             android:textStyle="bold"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp" />
+
+        <ImageButton
+            android:id="@+id/buttonExit"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_exit"
+            android:backgroundTint="@color/primary_color"
+            android:padding="12dp"
+            android:layout_gravity="end"
+            android:layout_marginEnd="0dp" />
     </androidx.appcompat.widget.Toolbar>
 
+    <!-- 🔹 Conteúdo principal -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -43,7 +55,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Cartão principal -->
+            <!-- 📦 Cartão principal -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -58,29 +70,17 @@
                     android:orientation="vertical"
                     android:padding="18dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- 🔸 Cabeçalho -->
+                    <TextView
+                        android:id="@+id/textViewWeekSummary"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:text="Resumo da semana"
+                        android:textColor="#000000"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/textViewWeekSummary"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Resumo da semana"
-                            android:textColor="#000000"
-                            android:textSize="14sp" />
-
-                        <TextView
-                            android:id="@+id/textViewWeekRange"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Semana atual"
-                            android:textColor="#000000"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
+                    <!-- 🔸 Valor principal -->
                     <TextView
                         android:id="@+id/textViewBudgetRemaining"
                         android:layout_width="wrap_content"
@@ -100,39 +100,42 @@
                         android:textColor="#000000"
                         android:textSize="14sp" />
 
-                    <LinearLayout
+                    <!-- 🔸 Barra de progresso -->
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:layout_height="40dp"
+                        android:layout_marginTop="24dp"
+                        android:layout_marginBottom="24dp">
 
                         <ProgressBar
                             android:id="@+id/progressBarBudget"
                             style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="0dp"
-                            android:layout_weight="1"
-                            android:layout_height="8dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:max="100"
                             android:progress="0"
-                            android:progressTint="#3FA4CE"
-                            android:background="@android:color/darker_gray" />
+                            android:indeterminate="false"
+                            android:progressDrawable="@drawable/progress_bar_budget"
+                            android:clipToOutline="true" />
 
+                        <!-- Percentagem centrada dentro da barra -->
                         <TextView
-                            android:id="@+id/textViewProgress"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="0%"
-                            android:textColor="#697A90"
-                            android:textSize="14sp" />
-                    </LinearLayout>
+                            android:id="@+id/textViewProgressDetail"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="0% do orçamento usado"
+                            android:textColor="#000000"
+                            android:textStyle="bold"
+                            android:textSize="15sp" />
+                    </FrameLayout>
 
+                    <!-- 🔸 Totais -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -185,6 +188,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- 🔹 Secção orçamento -->
             <TextView
                 android:id="@+id/textWeeklyBudgetLabel"
                 android:layout_width="wrap_content"
@@ -220,13 +224,14 @@
                 android:layout_height="wrap_content"
                 android:text="Guardar"
                 android:backgroundTint="#3FA4CE"
-                android:textColor="#000000"
+                android:textColor="#FFFF"
                 android:layout_marginTop="10dp"
                 android:paddingHorizontal="32dp"
                 android:paddingVertical="10dp"
                 android:layout_gravity="start"
                 android:fontFamily="sans-serif-medium" />
 
+            <!-- 🔹 Secção gastos recentes -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -244,6 +249,7 @@
                 android:padding="8dp"
                 android:background="#F6F6F6" />
 
+            <!-- 🔹 Gráfico -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -259,6 +265,7 @@
                 android:layout_height="350dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="24dp" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

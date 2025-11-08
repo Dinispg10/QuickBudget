@@ -16,7 +16,7 @@
 
 
 
-    <!-- Define MainActivity como launcher -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

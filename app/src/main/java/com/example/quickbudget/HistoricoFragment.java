@@ -21,14 +21,16 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 public class HistoricoFragment extends Fragment implements DetalheDespesaDialogFragment.OnDespesaAlteradaListener {
 
-    private TextView tvWeeklyBudget, tvTotalSpent, tvDifference, tvAverage, tvSummaryTitle, tvStatus;
     private RecyclerView rvWeekExpenses;
+    private TextView tvWeeklyBudget, tvTotalSpent, tvDifference, tvAverage, tvSummaryTitle, tvStatus;
     private BarChart barChart;
     private DespesaAdapter adapter;
 
@@ -39,7 +41,7 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_history, container, false);
+        View view = inflater.inflate(R.layout.fragment_historico, container, false);
 
         tvSummaryTitle = view.findViewById(R.id.textViewHistorySummary);
         tvWeeklyBudget = view.findViewById(R.id.textViewWeeklyBudget);
@@ -47,7 +49,6 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         tvDifference = view.findViewById(R.id.textViewDifference);
         tvAverage = view.findViewById(R.id.textViewAverage);
         tvStatus = view.findViewById(R.id.textViewStatus);
-
         rvWeekExpenses = view.findViewById(R.id.recyclerViewWeekExpenses);
         barChart = view.findViewById(R.id.barChartWeeks);
 
@@ -64,22 +65,35 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         rvWeekExpenses.setHasFixedSize(true);
         rvWeekExpenses.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // ✅ Agora a lista permite abrir e editar despesas
-        adapter = new DespesaAdapter(
-                DespesaStorage.getDespesasSemana(requireContext()),
-                despesa -> {
-                    DetalheDespesaDialogFragment dialog = DetalheDespesaDialogFragment.nova(despesa.getId());
-                    dialog.setOnDespesaAlteradaListener(this);
-                    dialog.show(getParentFragmentManager(), "DetalheDespesa");
-                }
-        );
+        long inicioSemana = DateUtils.getWeekStartMillis();
+
+        DespesaDAO dao = new DespesaDAO(requireContext());
+        List<Despesa> despesasSemana = dao.listarSemana(inicioSemana);
+        dao.fechar();
+
+        adapter = new DespesaAdapter(despesasSemana, despesa -> {
+            DetalheDespesaDialogFragment dialog =
+                    DetalheDespesaDialogFragment.nova(despesa.getId());
+            dialog.setOnDespesaAlteradaListener(this);
+            dialog.show(getParentFragmentManager(), "DetalheDespesa");
+        });
 
         rvWeekExpenses.setAdapter(adapter);
     }
 
+
     private void atualizarResumo() {
-        double budget = BudgetStorage.getWeeklyBudget(requireContext());
-        double total = DespesaStorage.getTotalGastoSemana(requireContext());
+        long inicioSemana = DateUtils.getWeekStartMillis();
+        long fimSemana = DateUtils.getWeekEndMillis();
+
+        DespesaDAO dao = new DespesaDAO(requireContext());
+        double total = dao.getTotalPorIntervalo(inicioSemana, fimSemana);
+        dao.fechar();
+
+        BudgetDAO bdao = new BudgetDAO(requireContext());
+        double budget = bdao.getBudgetPorSemana(inicioSemana);
+        bdao.fechar();
+
         double diff = budget - total;
         double avg = total / 7.0;
 
@@ -89,83 +103,89 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         tvAverage.setText(String.format(Locale.getDefault(), "Média diária: €%.2f", avg));
 
         if (diff < 0) {
-            tvDifference.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-            tvStatus.setText("Fora do orçamento");
-            tvStatus.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            tvDifference.setTextColor(Color.RED);
+            tvStatus.setText("Excedeu o orçamento");
+            tvStatus.setTextColor(Color.RED);
         } else {
-            tvDifference.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            tvDifference.setTextColor(Color.GREEN);
             tvStatus.setText("Dentro do orçamento");
-            tvStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            tvStatus.setTextColor(Color.GREEN);
         }
     }
 
     private void setupBarChart() {
         barChart.getDescription().setEnabled(false);
         barChart.setDrawGridBackground(false);
-        barChart.setDrawBarShadow(false);
-        barChart.setPinchZoom(false);
-        barChart.setDrawValueAboveBar(true);
-        barChart.setNoDataText("Sem dados suficientes para mostrar o gráfico");
 
+        // 🗓️ Labels das últimas 4 semanas ("03 - 10 Nov")
         List<String> semanas = DateUtils.getLastWeeksLabels(4);
-        List<Double> gastos = DespesaStorage.getTotalGastosSemanas(requireContext(), 4);
-        List<Double> budgets = BudgetStorage.getBudgetsUltimasSemanas(requireContext(), 4);
-
         List<BarEntry> gastoEntries = new ArrayList<>();
         List<BarEntry> budgetEntries = new ArrayList<>();
 
-        for (int i = 0; i < semanas.size(); i++) {
-            gastoEntries.add(new BarEntry(i, gastos.get(i).floatValue()));
-            budgetEntries.add(new BarEntry(i, budgets.get(i).floatValue()));
+        DespesaDAO ddao = new DespesaDAO(requireContext());
+        BudgetDAO bdao = new BudgetDAO(requireContext());
+
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        // 🔄 Gera os valores reais de cada semana (últimas 4)
+        for (int i = 3; i >= 0; i--) {
+            Calendar start = (Calendar) cal.clone();
+            start.add(Calendar.WEEK_OF_YEAR, -i);
+            long startMillis = start.getTimeInMillis();
+            long endMillis = startMillis + 7L * 24 * 60 * 60 * 1000;
+
+            double totalGasto = ddao.getTotalPorIntervalo(startMillis, endMillis);
+            double budget = bdao.getBudgetPorSemana(startMillis);
+
+            gastoEntries.add(new BarEntry(3 - i, (float) totalGasto));
+            budgetEntries.add(new BarEntry(3 - i, (float) budget));
         }
 
+        ddao.fechar();
+        bdao.fechar();
+
+        // 🎨 Configurações visuais
         BarDataSet setGasto = new BarDataSet(gastoEntries, "Gasto");
-        setGasto.setColor(Color.parseColor("#FF7043")); // Laranja
+        setGasto.setColor(Color.parseColor("#FF7043"));
 
         BarDataSet setBudget = new BarDataSet(budgetEntries, "Orçamento");
-        setBudget.setColor(Color.parseColor("#3FA4CE")); // Azul pastel
+        setBudget.setColor(Color.parseColor("#3FA4CE"));
 
         BarData data = new BarData(setGasto, setBudget);
-        data.setValueTextSize(12f);
-
-        // ✅ Corrige o agrupamento das barras
-        float groupSpace = 0.25f; // espaçamento entre grupos
-        float barSpace = 0.02f;   // espaço entre barras do mesmo grupo
-        float barWidth = 0.35f;   // largura de cada barra
-        data.setBarWidth(barWidth);
+        data.setBarWidth(0.35f);
 
         barChart.setData(data);
 
-        // Eixo X
+        // 📊 Eixo X — usa as labels com intervalo de semana
         XAxis xAxis = barChart.getXAxis();
         xAxis.setValueFormatter(new IndexAxisValueFormatter(semanas));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
-        xAxis.setCenterAxisLabels(true); // ✅ necessário para agrupamento
+        xAxis.setCenterAxisLabels(true);
         xAxis.setDrawGridLines(false);
 
-        // Eixo Y
+        // 📈 Eixo Y
         YAxis leftAxis = barChart.getAxisLeft();
-        leftAxis.setDrawGridLines(true);
         leftAxis.setAxisMinimum(0f);
-
         barChart.getAxisRight().setEnabled(false);
-        barChart.getLegend().setEnabled(true);
 
-        // ⚙️ MUITO IMPORTANTE: definir limites corretos para agrupar
-        barChart.setVisibleXRangeMaximum(semanas.size());
+        // Agrupamento das barras
+        float groupSpace = 0.25f, barSpace = 0.02f;
         barChart.getXAxis().setAxisMinimum(0f);
-        barChart.getXAxis().setAxisMaximum(0f + data.getGroupWidth(groupSpace, barSpace) * semanas.size());
-
+        barChart.getXAxis().setAxisMaximum(data.getGroupWidth(groupSpace, barSpace) * semanas.size());
         barChart.groupBars(0f, groupSpace, barSpace);
+
         barChart.invalidate();
     }
 
 
     @Override
     public void onDespesaAlterada() {
-        adapter.setItems(DespesaStorage.getDespesasSemana(requireContext()));
-        adapter.notifyDataSetChanged();
         atualizarResumo();
         setupBarChart();
     }
