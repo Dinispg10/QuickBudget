@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.Calendar;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,16 +20,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // === ✅ Garantir que o orçamento da semana está criado ===
+        // 💰 Garante que o orçamento da semana atual existe (ou é copiado da anterior)
         long inicioSemana = DateUtils.getWeekStartMillis();
         BudgetDAO bdao = new BudgetDAO(this);
         bdao.getOrCreateBudgetAtual(inicioSemana);
         bdao.fechar();
 
-        // === ✅ Verificar despesas recorrentes (semanal/mensal) ===
+        // 🌀 Verificar despesas recorrentes (semanal/mensal)
         verificarDespesasRecorrentes();
 
-        // === ⚙️ Configurar o menu inferior ===
+        // ⚙️ Configurar o menu inferior
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         dashboardFragment = new DashboardFragment();
@@ -40,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selected = null;
             int id = item.getItemId();
+
             if (id == R.id.menu_dashboard) {
                 selected = dashboardFragment;
             } else if (id == R.id.menu_add) {
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Abrir por defeito o Dashboard
+        // Abre por defeito o Dashboard
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.menu_dashboard);
         }
@@ -73,5 +73,4 @@ public class MainActivity extends AppCompatActivity {
         dao.gerarDespesasRecorrentes(inicioSemana);
         dao.fechar();
     }
-
 }

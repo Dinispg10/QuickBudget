@@ -1,5 +1,6 @@
 package com.example.quickbudget;
 
+import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -65,14 +66,12 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
 
         // 🔘 Botão de saída
         ImageButton buttonExit = view.findViewById(R.id.buttonExit);
-        buttonExit.setOnClickListener(v -> {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("Sair")
-                    .setMessage("Tens a certeza que queres sair da aplicação?")
-                    .setNegativeButton("Não", null)
-                    .setPositiveButton("Sim", (dialog, which) -> requireActivity().finishAffinity())
-                    .show();
-        });
+        buttonExit.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
+                .setTitle("Sair")
+                .setMessage("Tens a certeza que queres sair da aplicação?")
+                .setNegativeButton("Não", null)
+                .setPositiveButton("Sim", (dialog, which) -> requireActivity().finishAffinity())
+                .show());
 
         setupRecyclerView();
         setupPieChart();
@@ -87,6 +86,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
     // 🧾 RecyclerView - Despesas recentes
     // ===================================
 
+
     private void atualizarDespesasRecentes() {
         DespesaDAO dao = new DespesaDAO(requireContext());
         long inicioSemana = DateUtils.getWeekStartMillis();
@@ -95,6 +95,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         List<Despesa> todas = dao.listarTodas();
         dao.fechar();
 
+        // 🔹 Apenas as despesas da semana atual
         List<Despesa> semana = new ArrayList<>();
         for (Despesa d : todas) {
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
@@ -102,15 +103,12 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // 🔹 Ordenar pelas mais recentes
+        // 🔹 Ordenar por data (mais recentes primeiro)
         semana.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
 
-        // 🔹 Apenas as 2 mais recentes da semana atual
-        List<Despesa> recentes = semana.size() > 2
-                ? semana.subList(0, 2)
-                : semana;
+        // 🔹 Mostrar no máximo 2
+        List<Despesa> recentes = semana.size() > 2 ? semana.subList(0, 2) : semana;
 
-        // 🔹 Criar adapter apenas uma vez (sem duplicar)
         if (adapter == null) {
             adapter = new DespesaAdapter(recentes, despesa -> {
                 DetalheDespesaDialogFragment dialog =
@@ -118,24 +116,21 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
                 dialog.setOnDespesaAlteradaListener(this);
                 dialog.show(getParentFragmentManager(), "DetalheDespesa");
             });
-            rvRecentExpenses.setAdapter(adapter);
         } else {
             adapter.setItems(recentes);
             adapter.notifyDataSetChanged();
         }
+        if (rvRecentExpenses.getAdapter() != adapter) {
+            rvRecentExpenses.setAdapter(adapter);
+        }
 
-        android.util.Log.d("DEBUG_SEMANA", "Encontradas na semana: " + semana.size() +
-                " | Mostradas: " + recentes.size());
+
     }
 
     private void setupRecyclerView() {
         rvRecentExpenses.setHasFixedSize(true);
         rvRecentExpenses.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        atualizarDespesasRecentes(); // 🔹 chamamos um método separado e limpo
     }
-
-
 
     // ===================================
     // 💰 Atualizar orçamento semanal
@@ -182,6 +177,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
     // 🔄 Atualizar tudo
     // ===================================
     public void refreshAll() {
+        // === Carregar todas as despesas ===
         DespesaDAO ddao = new DespesaDAO(requireContext());
         List<Despesa> despesas = ddao.listarTodas();
         ddao.fechar();
@@ -189,7 +185,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         double total = 0.0;
         Map<String, Double> gastosPorCategoria = new HashMap<>();
 
-        // Filtrar apenas despesas da semana atual
+        // 🔹 Calcular intervalo da semana atual
         long inicioSemana = DateUtils.getWeekStartMillis();
         long fimSemana = DateUtils.getWeekEndMillis();
 
@@ -198,25 +194,27 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
                 semana.add(d);
                 total += d.getValor();
-                gastosPorCategoria.put(d.getCategoria(),
-                        gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0) + d.getValor());
+                gastosPorCategoria.put(
+                        d.getCategoria(),
+                        gastosPorCategoria.getOrDefault(d.getCategoria(), 0.0) + d.getValor()
+                );
             }
         }
 
-        // Atualizar despesas recentes
+        // 🔹 Atualizar lista de despesas recentes
         atualizarDespesasRecentes();
 
-
-        // Buscar orçamento da semana
+        // 🔹 Ler o orçamento atual (sem criar novo)
         BudgetDAO bdao = new BudgetDAO(requireContext());
-        double budget = bdao.getOrCreateBudgetAtual(inicioSemana);
+        double budget = bdao.getBudgetPorSemana(inicioSemana);
         bdao.fechar();
 
         double restante = budget - total;
         double mediaPorDia = total / 7.0;
 
+        // === Atualizar UI ===
         tvAvgDay.setText(String.format(Locale.getDefault(), "€%.2f", mediaPorDia));
-        tvWeeklyBudget.setText(String.format(Locale.getDefault(), "Orçamento semanal atual: €%.2f", budget));
+        tvWeeklyBudget.setText(String.format("Orçamento semanal atual: €%.2f", budget));
         tvTotalSpent.setText(String.format("€%.2f", total));
         tvBudgetRemaining.setText(String.format("€%.2f", restante));
 
@@ -230,27 +228,19 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
 
         // === Progresso ===
         double percent = (budget > 0) ? (total / budget) * 100.0 : 0.0;
-        int progress = (int) Math.round(percent);
-        int clampedProgress = Math.min(progress, 100);
+        int clampedProgress = (int) Math.min(percent, 100);
 
-// 🖋 Atualiza o texto dentro da barra
-        tvProgressDetail.setText(String.format(Locale.getDefault(), "%d%%", progress));
+        tvProgressDetail.setText(String.format(Locale.getDefault(), "%.0f%%", percent));
 
-// 🎨 Define cores
-        int corProgresso = progress > 100 ? Color.parseColor("#E74C3C") : Color.parseColor("#3FA4CE");
-        int corFundo = Color.parseColor("#E0E0E0"); // Cinzento claro
+        int corProgresso = percent > 100 ? Color.parseColor("#E74C3C") : Color.parseColor("#3FA4CE");
+        int corFundo = Color.parseColor("#E0E0E0");
 
         progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(corProgresso));
         progressBar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(corFundo));
 
-// 🎞️ Animação suave de preenchimento
-        android.animation.ObjectAnimator animation = android.animation.ObjectAnimator.ofInt(progressBar, "progress", 0, clampedProgress);
-        animation.setDuration(800); // 0.8 segundos
+        ObjectAnimator animation = ObjectAnimator.ofInt(progressBar, "progress", 0, clampedProgress);
+        animation.setDuration(800);
         animation.start();
-
-
-
-
 
         // === Gráfico de pizza ===
         List<PieEntry> entries = new ArrayList<>();
@@ -260,30 +250,16 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             entries.add(new PieEntry(e.getValue().floatValue(), e.getKey()));
 
             switch (e.getKey().toLowerCase()) {
-                case "alimentacao":
-                    cores.add(Color.parseColor("#FFB74D")); break;
-                case "transporte":
-                    cores.add(Color.parseColor("#4FC3F7")); break;
-                case "lazer":
-                    cores.add(Color.parseColor("#BA68C8")); break;
-                case "saúde":
-                case "saude":
-                    cores.add(Color.parseColor("#81C784")); break;
-                case "casa":
-                    cores.add(Color.parseColor("#A1887F")); break;
-                case "educação":
-                case "educacao":
-                    cores.add(Color.parseColor("#64B5F6")); break;
-                case "supermercado":
-                    cores.add(Color.parseColor("#FFD54F")); break;
-                case "subscrição":
-                case "subscricao":
-                    cores.add(Color.parseColor("#9575CD")); break;
-                case "outro":
-                case "outros":
-                    cores.add(Color.parseColor("#B0BEC5")); break;
-                default:
-                    cores.add(Color.parseColor("#AED581")); break;
+                case "alimentacao": cores.add(Color.parseColor("#FFB74D")); break;
+                case "transporte": cores.add(Color.parseColor("#4FC3F7")); break;
+                case "lazer": cores.add(Color.parseColor("#BA68C8")); break;
+                case "saude": cores.add(Color.parseColor("#81C784")); break;
+                case "casa": cores.add(Color.parseColor("#A1887F")); break;
+                case "educacao": cores.add(Color.parseColor("#64B5F6")); break;
+                case "supermercado": cores.add(Color.parseColor("#FFD54F")); break;
+                case "subscricao": cores.add(Color.parseColor("#9575CD")); break;
+                case "outro": cores.add(Color.parseColor("#B0BEC5")); break;
+                default: cores.add(Color.parseColor("#AED581")); break;
             }
         }
 
@@ -295,6 +271,14 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
         pieChart.invalidate();
+    }
+
+
+    // 🔁 Garante atualização quando voltas ao fragmento
+    @Override
+    public void onResume() {
+        super.onResume();
+        atualizarDespesasRecentes();
     }
 
     @Override

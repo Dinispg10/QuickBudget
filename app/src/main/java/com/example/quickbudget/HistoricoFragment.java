@@ -1,5 +1,6 @@
 package com.example.quickbudget;
 
+
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -102,14 +104,17 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         tvDifference.setText(String.format(Locale.getDefault(), "Saldo: €%.2f", diff));
         tvAverage.setText(String.format(Locale.getDefault(), "Média diária: €%.2f", avg));
 
+        int negativeColor = ContextCompat.getColor(requireContext(), R.color.history_negative_text);
+        int positiveColor = ContextCompat.getColor(requireContext(), R.color.history_positive_text);
+
         if (diff < 0) {
-            tvDifference.setTextColor(Color.RED);
+            tvDifference.setTextColor(negativeColor);
             tvStatus.setText("Excedeu o orçamento");
-            tvStatus.setTextColor(Color.RED);
+            tvStatus.setTextColor(negativeColor);
         } else {
-            tvDifference.setTextColor(Color.GREEN);
+            tvDifference.setTextColor(positiveColor);
             tvStatus.setText("Dentro do orçamento");
-            tvStatus.setTextColor(Color.GREEN);
+            tvStatus.setTextColor(positiveColor);
         }
     }
 
@@ -117,7 +122,7 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         barChart.getDescription().setEnabled(false);
         barChart.setDrawGridBackground(false);
 
-        // 🗓️ Labels das últimas 4 semanas ("03 - 10 Nov")
+        // 🗓️ Labels das últimas 4 semanas (ex: "03 - 09 Nov")
         List<String> semanas = DateUtils.getLastWeeksLabels(4);
         List<BarEntry> gastoEntries = new ArrayList<>();
         List<BarEntry> budgetEntries = new ArrayList<>();
@@ -125,19 +130,33 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         DespesaDAO ddao = new DespesaDAO(requireContext());
         BudgetDAO bdao = new BudgetDAO(requireContext());
 
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-
-        // 🔄 Gera os valores reais de cada semana (últimas 4)
+        // 🔁 Para cada uma das últimas 4 semanas, calcula intervalo correto
         for (int i = 3; i >= 0; i--) {
-            Calendar start = (Calendar) cal.clone();
+            // Usa o mesmo padrão de DateUtils para garantir coerência
+            Calendar start = Calendar.getInstance(Locale.getDefault());
+            start.setFirstDayOfWeek(Calendar.MONDAY);
             start.add(Calendar.WEEK_OF_YEAR, -i);
+
+            // Corrige bug do domingo
+            if (start.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                start.add(Calendar.WEEK_OF_YEAR, 1);
+            }
+
+            start.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+            start.set(Calendar.HOUR_OF_DAY, 0);
+            start.set(Calendar.MINUTE, 0);
+            start.set(Calendar.SECOND, 0);
+            start.set(Calendar.MILLISECOND, 0);
+
+            Calendar end = (Calendar) start.clone();
+            end.add(Calendar.DAY_OF_MONTH, 6);
+            end.set(Calendar.HOUR_OF_DAY, 23);
+            end.set(Calendar.MINUTE, 59);
+            end.set(Calendar.SECOND, 59);
+            end.set(Calendar.MILLISECOND, 999);
+
             long startMillis = start.getTimeInMillis();
-            long endMillis = startMillis + 7L * 24 * 60 * 60 * 1000;
+            long endMillis = end.getTimeInMillis();
 
             double totalGasto = ddao.getTotalPorIntervalo(startMillis, endMillis);
             double budget = bdao.getBudgetPorSemana(startMillis);
@@ -152,13 +171,14 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         // 🎨 Configurações visuais
         BarDataSet setGasto = new BarDataSet(gastoEntries, "Gasto");
         setGasto.setColor(Color.parseColor("#FF7043"));
+        setGasto.setValueTextSize(12f);
 
         BarDataSet setBudget = new BarDataSet(budgetEntries, "Orçamento");
         setBudget.setColor(Color.parseColor("#3FA4CE"));
+        setBudget.setValueTextSize(12f);
 
         BarData data = new BarData(setGasto, setBudget);
         data.setBarWidth(0.35f);
-
         barChart.setData(data);
 
         // 📊 Eixo X — usa as labels com intervalo de semana
@@ -168,20 +188,23 @@ public class HistoricoFragment extends Fragment implements DetalheDespesaDialogF
         xAxis.setGranularity(1f);
         xAxis.setCenterAxisLabels(true);
         xAxis.setDrawGridLines(false);
+        xAxis.setTextSize(12f);
 
         // 📈 Eixo Y
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
+        leftAxis.setTextSize(12f);
         barChart.getAxisRight().setEnabled(false);
 
         // Agrupamento das barras
         float groupSpace = 0.25f, barSpace = 0.02f;
-        barChart.getXAxis().setAxisMinimum(0f);
-        barChart.getXAxis().setAxisMaximum(data.getGroupWidth(groupSpace, barSpace) * semanas.size());
+        xAxis.setAxisMinimum(0f);
+        xAxis.setAxisMaximum(data.getGroupWidth(groupSpace, barSpace) * semanas.size());
         barChart.groupBars(0f, groupSpace, barSpace);
 
         barChart.invalidate();
     }
+
 
 
     @Override

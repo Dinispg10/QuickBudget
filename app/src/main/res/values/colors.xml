@@ -8,4 +8,6 @@
     <color name="text_secondary">#757575</color>
     <color name="card_bg">#FFFFFF</color>
     <color name="secondary_card_bg">#F6F8FA</color>
+    <color name="history_negative_text">#E74C3C</color>
+    <color name="history_positive_text">#27AE60</color>
 </resources>

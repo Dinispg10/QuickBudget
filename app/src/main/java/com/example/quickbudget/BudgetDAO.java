@@ -5,9 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class BudgetDAO {
     private final SQLiteDatabase db;
 
@@ -16,42 +13,81 @@ public class BudgetDAO {
         db = helper.getWritableDatabase();
     }
 
-    public void setBudget(double valor, long startOfWeek) {
+    // Define (ou substitui) o orçamento da semana atual
+    public void setBudget(double valor, long ignoredStartOfWeek) {
+        // Garante que grava sempre o início da semana correta
+        long startOfWeek = DateUtils.getWeekStartMillis();
+
         ContentValues values = new ContentValues();
         values.put(DBHelper.COLUMN_WEEK_START, startOfWeek);
         values.put(DBHelper.COLUMN_BUDGET_VALUE, valor);
+
         db.insertWithOnConflict(DBHelper.TABLE_BUDGET, null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    // Obtém o orçamento atual; se não existir, copia o anterior
     public double getOrCreateBudgetAtual(long startOfWeek) {
-        Cursor c = db.query(DBHelper.TABLE_BUDGET, null,
-                DBHelper.COLUMN_WEEK_START + "=?", new String[]{String.valueOf(startOfWeek)},
-                null, null, null);
-        if (c.moveToFirst()) {
-            double v = c.getDouble(c.getColumnIndexOrThrow(DBHelper.COLUMN_BUDGET_VALUE));
-            c.close();
-            return v;
-        }
-        c.close();
+        Double existente = getBudgetValor(startOfWeek);
 
-        // Se não existir, cria com 0
+        if (existente != null) {
+            return existente;
+        }
+
+        Double anterior = getUltimoBudgetAntes(startOfWeek);
+        if (anterior != null) {
+            setBudget(anterior, startOfWeek);
+            return anterior;
+        }
+
         setBudget(0.0, startOfWeek);
         return 0.0;
     }
 
+    // Lê orçamento sem criar nada
     public double getBudgetPorSemana(long startOfWeek) {
-        Cursor c = db.query(DBHelper.TABLE_BUDGET, null,
-                DBHelper.COLUMN_WEEK_START + "=?", new String[]{String.valueOf(startOfWeek)},
-                null, null, null);
-        if (c.moveToFirst()) {
-            double v = c.getDouble(c.getColumnIndexOrThrow(DBHelper.COLUMN_BUDGET_VALUE));
-            c.close();
-            return v;
-        }
-        c.close();
-        return 0.0;
+        Double existente = getBudgetValor(startOfWeek);
+        return existente != null ? existente : 0.0;
     }
 
-    public void fechar() { db.close(); }
-}
+    // Obtém o valor do orçamento de uma semana
+    private Double getBudgetValor(long startOfWeek) {
+        Cursor c = db.query(
+                DBHelper.TABLE_BUDGET,
+                new String[]{DBHelper.COLUMN_BUDGET_VALUE},
+                DBHelper.COLUMN_WEEK_START + "=?",
+                new String[]{String.valueOf(startOfWeek)},
+                null, null, null
+        );
 
+        Double valor = null;
+        if (c.moveToFirst()) {
+            valor = c.getDouble(c.getColumnIndexOrThrow(DBHelper.COLUMN_BUDGET_VALUE));
+        }
+        c.close();
+        return valor;
+    }
+
+    // Procura o último orçamento anterior à semana atual
+    private Double getUltimoBudgetAntes(long startOfWeek) {
+        Cursor c = db.query(
+                DBHelper.TABLE_BUDGET,
+                new String[]{DBHelper.COLUMN_BUDGET_VALUE},
+                DBHelper.COLUMN_WEEK_START + " < ?",
+                new String[]{String.valueOf(startOfWeek)},
+                null, null,
+                DBHelper.COLUMN_WEEK_START + " DESC",
+                "1"
+        );
+
+        Double valor = null;
+        if (c.moveToFirst()) {
+            valor = c.getDouble(c.getColumnIndexOrThrow(DBHelper.COLUMN_BUDGET_VALUE));
+        }
+        c.close();
+        return valor;
+    }
+
+    public void fechar() {
+        db.close();
+    }
+}

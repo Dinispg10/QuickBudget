@@ -61,8 +61,7 @@ public class DespesaDAO {
         List<Despesa> lista = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
-        // Calcula o fim da semana (domingo 23:59)
-        long fimSemana = inicioSemana + (7L * 24L * 60L * 60L * 1000L) - 1;
+        long fimSemana = DateUtils.getWeekEndMillis();
 
         Cursor c = db.query(
                 DBHelper.TABLE_DESPESAS,
@@ -83,7 +82,6 @@ public class DespesaDAO {
         db.close();
         return lista;
     }
-
 
     // 💰 Total gasto num intervalo
     public double getTotalPorIntervalo(long inicio, long fim) {
@@ -127,10 +125,9 @@ public class DespesaDAO {
         db.close();
     }
 
-
-    // 🚫 Verificar se já existe uma despesa semelhante nesta semana
+    // 🚫 Verificar se já existe despesa semelhante nesta semana
     private boolean existeDespesaSimilar(String descricao, String categoria, double valor, long inicioSemana) {
-        long fimSemana = inicioSemana + 7L * 24 * 60 * 60 * 1000L;
+        long fimSemana = DateUtils.getWeekEndMillis();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor c = db.query(DBHelper.TABLE_DESPESAS,
@@ -150,8 +147,6 @@ public class DespesaDAO {
 
         boolean existe = (c != null && c.moveToFirst());
         if (c != null) c.close();
-
-        // ❌ NÃO FECHAR O DB AQUI — ele ainda está a ser usado por gerarDespesasRecorrentes()
         return existe;
     }
 
@@ -198,9 +193,9 @@ public class DespesaDAO {
             }
         }
 
-        db.close(); // ✅ fecha apenas aqui
+        db.close();
     }
-    // 🔄 Converter cursor em objeto Despesa
+
     private Despesa fromCursor(Cursor c) {
         return new Despesa(
                 c.getInt(c.getColumnIndexOrThrow(DBHelper.COLUMN_ID)),
