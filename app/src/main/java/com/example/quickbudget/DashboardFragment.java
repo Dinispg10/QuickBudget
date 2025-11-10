@@ -3,6 +3,7 @@ package com.example.quickbudget;
 import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -20,12 +21,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +37,7 @@ import java.util.Map;
 
 public class DashboardFragment extends Fragment implements DetalheDespesaDialogFragment.OnDespesaAlteradaListener {
 
+    // Variáveis da interface
     private RecyclerView rvRecentExpenses;
     private DespesaAdapter adapter;
     private PieChart pieChart;
@@ -49,6 +53,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
+        // Liga elementos do layout
         rvRecentExpenses = view.findViewById(R.id.recyclerViewRecentExpenses);
         pieChart = view.findViewById(R.id.pieChartCategories);
         tvWeekSummary = view.findViewById(R.id.textViewWeekSummary);
@@ -62,9 +67,10 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         tvLeftOf = view.findViewById(R.id.textViewLeftOf);
         tvAvgDay = view.findViewById(R.id.textViewAvgDay);
 
+        // Mostra intervalo da semana atual
         tvWeekSummary.setText("Resumo da semana (" + DateUtils.getCurrentWeekRangeString() + ")");
 
-        // 🔘 Botão de saída
+        // Botão de sair
         ImageButton buttonExit = view.findViewById(R.id.buttonExit);
         buttonExit.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
                 .setTitle("Sair")
@@ -73,20 +79,18 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
                 .setPositiveButton("Sim", (dialog, which) -> requireActivity().finishAffinity())
                 .show());
 
+        // Inicializa componentes
         setupRecyclerView();
         setupPieChart();
         setupBudgetUpdate();
 
+        // Atualiza dados
         refreshAll();
 
         return view;
     }
 
-    // ===================================
-    // 🧾 RecyclerView - Despesas recentes
-    // ===================================
-
-
+    // Atualiza lista de despesas recentes
     private void atualizarDespesasRecentes() {
         DespesaDAO dao = new DespesaDAO(requireContext());
         long inicioSemana = DateUtils.getWeekStartMillis();
@@ -95,7 +99,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         List<Despesa> todas = dao.listarTodas();
         dao.fechar();
 
-        // 🔹 Apenas as despesas da semana atual
+        // Filtra despesas da semana atual
         List<Despesa> semana = new ArrayList<>();
         for (Despesa d : todas) {
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
@@ -103,12 +107,13 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // 🔹 Ordenar por data (mais recentes primeiro)
+        // Ordena por data
         semana.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
 
-        // 🔹 Mostrar no máximo 2
+        // Mostra no máximo 2
         List<Despesa> recentes = semana.size() > 2 ? semana.subList(0, 2) : semana;
 
+        // Configura adapter
         if (adapter == null) {
             adapter = new DespesaAdapter(recentes, despesa -> {
                 DetalheDespesaDialogFragment dialog =
@@ -120,21 +125,19 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             adapter.setItems(recentes);
             adapter.notifyDataSetChanged();
         }
+
         if (rvRecentExpenses.getAdapter() != adapter) {
             rvRecentExpenses.setAdapter(adapter);
         }
-
-
     }
 
+    // Configuração do RecyclerView
     private void setupRecyclerView() {
         rvRecentExpenses.setHasFixedSize(true);
         rvRecentExpenses.setLayoutManager(new LinearLayoutManager(getContext()));
     }
 
-    // ===================================
-    // 💰 Atualizar orçamento semanal
-    // ===================================
+    // Atualiza orçamento semanal
     private void setupBudgetUpdate() {
         buttonUpdateBudget.setOnClickListener(v -> {
             String valueStr = editNewBudget.getText().toString().trim();
@@ -142,6 +145,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
                 editNewBudget.setError("Insere um novo orçamento!");
                 return;
             }
+
             try {
                 double valor = Double.parseDouble(valueStr.replace(",", "."));
                 long inicioSemana = DateUtils.getWeekStartMillis();
@@ -158,9 +162,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         });
     }
 
-    // ===================================
-    // 🥧 Gráfico de pizza
-    // ===================================
+    // Configuração inicial do gráfico
     private void setupPieChart() {
         pieChart.getDescription().setEnabled(false);
         pieChart.setUsePercentValues(true);
@@ -173,11 +175,9 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         legend.setDrawInside(false);
     }
 
-    // ===================================
-    // 🔄 Atualizar tudo
-    // ===================================
+    // Atualiza todos os dados da semana
     public void refreshAll() {
-        // === Carregar todas as despesas ===
+        // Carrega despesas
         DespesaDAO ddao = new DespesaDAO(requireContext());
         List<Despesa> despesas = ddao.listarTodas();
         ddao.fechar();
@@ -185,10 +185,11 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         double total = 0.0;
         Map<String, Double> gastosPorCategoria = new HashMap<>();
 
-        // 🔹 Calcular intervalo da semana atual
+        // Intervalo da semana atual
         long inicioSemana = DateUtils.getWeekStartMillis();
         long fimSemana = DateUtils.getWeekEndMillis();
 
+        // Filtra e soma
         List<Despesa> semana = new ArrayList<>();
         for (Despesa d : despesas) {
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
@@ -201,10 +202,10 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // 🔹 Atualizar lista de despesas recentes
+        // Atualiza lista
         atualizarDespesasRecentes();
 
-        // 🔹 Ler o orçamento atual (sem criar novo)
+        // Lê orçamento
         BudgetDAO bdao = new BudgetDAO(requireContext());
         double budget = bdao.getBudgetPorSemana(inicioSemana);
         bdao.fechar();
@@ -212,12 +213,13 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         double restante = budget - total;
         double mediaPorDia = total / 7.0;
 
-        // === Atualizar UI ===
+        // Atualiza textos
         tvAvgDay.setText(String.format(Locale.getDefault(), "€%.2f", mediaPorDia));
         tvWeeklyBudget.setText(String.format("Orçamento semanal atual: €%.2f", budget));
         tvTotalSpent.setText(String.format("€%.2f", total));
         tvBudgetRemaining.setText(String.format("€%.2f", restante));
 
+        // Cores do orçamento
         if (restante < 0) {
             tvBudgetRemaining.setTextColor(Color.parseColor("#E74C3C"));
             tvLeftOf.setText(String.format("Excedeu o orçamento de €%.2f", budget));
@@ -226,7 +228,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             tvLeftOf.setText(String.format("Restante de €%.2f", budget));
         }
 
-        // === Progresso ===
+        // Barra de progresso
         double percent = (budget > 0) ? (total / budget) * 100.0 : 0.0;
         int clampedProgress = (int) Math.min(percent, 100);
 
@@ -242,45 +244,77 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         animation.setDuration(800);
         animation.start();
 
-        // === Gráfico de pizza ===
+        // Gráfico de pizza
         List<PieEntry> entries = new ArrayList<>();
         List<Integer> cores = new ArrayList<>();
 
+        // Cria fatias
         for (Map.Entry<String, Double> e : gastosPorCategoria.entrySet()) {
             entries.add(new PieEntry(e.getValue().floatValue(), e.getKey()));
 
-            switch (e.getKey().toLowerCase()) {
-                case "alimentacao": cores.add(Color.parseColor("#FFB74D")); break;
-                case "transporte": cores.add(Color.parseColor("#4FC3F7")); break;
-                case "lazer": cores.add(Color.parseColor("#BA68C8")); break;
-                case "saude": cores.add(Color.parseColor("#81C784")); break;
-                case "casa": cores.add(Color.parseColor("#A1887F")); break;
-                case "educacao": cores.add(Color.parseColor("#64B5F6")); break;
-                case "supermercado": cores.add(Color.parseColor("#FFD54F")); break;
-                case "subscricao": cores.add(Color.parseColor("#9575CD")); break;
-                case "outro": cores.add(Color.parseColor("#B0BEC5")); break;
-                default: cores.add(Color.parseColor("#AED581")); break;
+            String chave = Normalizer.normalize(e.getKey().toLowerCase(), Normalizer.Form.NFD)
+                    .replaceAll("[^\\p{ASCII}]", "");
+
+            switch (chave) {
+                case "alimentacao": cores.add(Color.parseColor("#E53935")); break;
+                case "transporte": cores.add(Color.parseColor("#1E88E5")); break;
+                case "lazer": cores.add(Color.parseColor("#8E24AA")); break;
+                case "saude": cores.add(Color.parseColor("#43A047")); break;
+                case "casa": cores.add(Color.parseColor("#6D4C41")); break;
+                case "educacao": cores.add(Color.parseColor("#FFA726")); break;
+                case "supermercado": cores.add(Color.parseColor("#FDD835")); break;
+                case "subscricao": cores.add(Color.parseColor("#00ACC1")); break;
+                case "outro": cores.add(Color.parseColor("#9E9E9E")); break;
+                default: cores.add(Color.parseColor("#00897B")); break;
             }
         }
 
+        // Cria dataset
         PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setColors(cores);
-        dataSet.setValueTextSize(12f);
-        dataSet.setValueTextColor(Color.DKGRAY);
+        dataSet.setValueTextSize(13f);
+        dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueTypeface(Typeface.DEFAULT_BOLD);
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
+
+        // Aparência do gráfico
+        pieChart.setDrawEntryLabels(false);
+        pieChart.setUsePercentValues(false);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleColor(Color.WHITE);
+        pieChart.setTransparentCircleRadius(55f);
+        pieChart.setHoleRadius(45f);
+
+        // Legenda
+        Legend legenda = pieChart.getLegend();
+        legenda.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legenda.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legenda.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legenda.setDrawInside(false);
+        legenda.setWordWrapEnabled(true);
+        legenda.setTextSize(12f);
+        legenda.setXEntrySpace(10f);
+        legenda.setYEntrySpace(5f);
+
+        // Margem inferior
+        pieChart.setExtraOffsets(0, 0, 0, 10);
+
+        // Animação
+        pieChart.animateY(1000, Easing.EaseInOutQuad);
         pieChart.invalidate();
     }
 
-
-    // 🔁 Garante atualização quando voltas ao fragmento
+    // Atualiza quando volta ao fragmento
     @Override
     public void onResume() {
         super.onResume();
         atualizarDespesasRecentes();
     }
 
+    // Listener de alteração
     @Override
     public void onDespesaAlterada() {
         refreshAll();

@@ -6,10 +6,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
 
+    // Nome e versão da base de dados
     private static final String DATABASE_NAME = "quickbudget.db";
     private static final int DATABASE_VERSION = 1;
 
-    // ===== TABELA DESPESAS =====
+    // Campos da tabela DESPESAS
     public static final String TABLE_DESPESAS = "despesas";
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_DESCRICAO = "descricao";
@@ -18,15 +19,17 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_RECORRENCIA = "recorrencia";
     public static final String COLUMN_TIMESTAMP = "timestamp"; // data/hora da despesa
 
-    // ===== TABELA BUDGET =====
+    // Campos da tabela BUDGET
     public static final String TABLE_BUDGET = "budget";
-    public static final String COLUMN_WEEK_START = "start_of_week"; // segunda-feira 00h00
-    public static final String COLUMN_BUDGET_VALUE = "valor"; // valor do orçamento semanal
+    public static final String COLUMN_WEEK_START = "start_of_week"; // início da semana
+    public static final String COLUMN_BUDGET_VALUE = "valor"; // valor do orçamento
 
+    // Construtor da base de dados
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // Cria as tabelas na primeira execução
     @Override
     public void onCreate(SQLiteDatabase db) {
         // Criação da tabela DESPESAS
@@ -44,6 +47,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 COLUMN_BUDGET_VALUE + " REAL)");
     }
 
+    // Atualiza base de dados quando muda a versão
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_DESPESAS);

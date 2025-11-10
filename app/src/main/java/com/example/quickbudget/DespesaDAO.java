@@ -10,13 +10,14 @@ import java.util.Calendar;
 import java.util.List;
 
 public class DespesaDAO {
-    private final DBHelper dbHelper;
+    private final DBHelper dbHelper; // ligação à base de dados
 
+    // Construtor
     public DespesaDAO(Context context) {
         dbHelper = new DBHelper(context);
     }
 
-    // 🟢 Inserir nova despesa
+    // Inserir nova despesa
     public long inserir(Despesa despesa) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -30,7 +31,7 @@ public class DespesaDAO {
         return id;
     }
 
-    // 🔍 Obter despesa por ID
+    // Obter despesa por ID
     public Despesa obterPorId(int id) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor c = db.query(DBHelper.TABLE_DESPESAS, null,
@@ -43,7 +44,7 @@ public class DespesaDAO {
         return d;
     }
 
-    // 📋 Listar todas as despesas
+    // Listar todas as despesas
     public List<Despesa> listarTodas() {
         List<Despesa> lista = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -56,11 +57,10 @@ public class DespesaDAO {
         return lista;
     }
 
-    // 📆 Listar despesas da semana específica
+    // Listar despesas da semana
     public List<Despesa> listarSemana(long inicioSemana) {
         List<Despesa> lista = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-
         long fimSemana = DateUtils.getWeekEndMillis();
 
         Cursor c = db.query(
@@ -73,9 +73,7 @@ public class DespesaDAO {
         );
 
         if (c != null) {
-            while (c.moveToNext()) {
-                lista.add(fromCursor(c));
-            }
+            while (c.moveToNext()) lista.add(fromCursor(c));
             c.close();
         }
 
@@ -83,7 +81,7 @@ public class DespesaDAO {
         return lista;
     }
 
-    // 💰 Total gasto num intervalo
+    // Calcular total gasto num intervalo
     public double getTotalPorIntervalo(long inicio, long fim) {
         double total = 0.0;
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -100,7 +98,7 @@ public class DespesaDAO {
         return total;
     }
 
-    // ✏️ Atualizar despesa
+    // Atualizar uma despesa existente
     public void atualizar(Despesa despesa) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -116,7 +114,7 @@ public class DespesaDAO {
         db.close();
     }
 
-    // 🗑️ Eliminar despesa
+    // Eliminar despesa pelo ID
     public void eliminar(int id) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.delete(DBHelper.TABLE_DESPESAS,
@@ -125,7 +123,7 @@ public class DespesaDAO {
         db.close();
     }
 
-    // 🚫 Verificar se já existe despesa semelhante nesta semana
+    // Verifica se já existe despesa semelhante na mesma semana
     private boolean existeDespesaSimilar(String descricao, String categoria, double valor, long inicioSemana) {
         long fimSemana = DateUtils.getWeekEndMillis();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -150,6 +148,7 @@ public class DespesaDAO {
         return existe;
     }
 
+    // Gera automaticamente despesas recorrentes
     public void gerarDespesasRecorrentes(long inicioSemana) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -167,6 +166,7 @@ public class DespesaDAO {
 
                     boolean deveCriar = false;
 
+                    // Verifica se deve criar despesa nova conforme recorrência
                     if ("Semanal".equalsIgnoreCase(recorrencia)) {
                         if (timestampAntigo < inicioSemana) deveCriar = true;
                     } else if ("Mensal".equalsIgnoreCase(recorrencia)) {
@@ -180,6 +180,7 @@ public class DespesaDAO {
                         }
                     }
 
+                    // Cria nova despesa se não existir igual
                     if (deveCriar && !existeDespesaSimilar(descricao, categoria, valor, inicioSemana)) {
                         ContentValues values = new ContentValues();
                         values.put(DBHelper.COLUMN_DESCRICAO, descricao);
@@ -196,6 +197,7 @@ public class DespesaDAO {
         db.close();
     }
 
+    // Cria objeto Despesa a partir do cursor
     private Despesa fromCursor(Cursor c) {
         return new Despesa(
                 c.getInt(c.getColumnIndexOrThrow(DBHelper.COLUMN_ID)),
@@ -207,6 +209,7 @@ public class DespesaDAO {
         );
     }
 
+    // Fecha o helper da base de dados
     public void fechar() {
         dbHelper.close();
     }

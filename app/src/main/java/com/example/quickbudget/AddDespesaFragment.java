@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 public class AddDespesaFragment extends Fragment {
 
+    // Campos do formulário
     private EditText editDescricao, editValor;
     private Spinner spinnerCategoria, spinnerRecorrencia;
     private Button buttonGuardar;
@@ -30,18 +31,21 @@ public class AddDespesaFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_add_despesa, container, false);
 
+        // Liga elementos do layout
         editDescricao = view.findViewById(R.id.editTextDescription);
         editValor = view.findViewById(R.id.editTextAmount);
         spinnerCategoria = view.findViewById(R.id.spinnerCategory);
         spinnerRecorrencia = view.findViewById(R.id.spinner_recorrencia);
         buttonGuardar = view.findViewById(R.id.buttonSave);
 
+        // Configura spinners e botão
         setupSpinners();
         setupButton();
 
         return view;
     }
 
+    // Configura as listas de categoria e recorrência
     private void setupSpinners() {
         ArrayAdapter adapterCategorias = ArrayAdapter.createFromResource(
                 requireContext(),
@@ -62,11 +66,14 @@ public class AddDespesaFragment extends Fragment {
         spinnerRecorrencia.setSelection(0, false);
     }
 
+    // Configura o botão de guardar
     private void setupButton() {
         buttonGuardar.setOnClickListener(v -> {
+            // Lê campos de texto
             String descricao = editDescricao.getText().toString().trim();
             String valorStr = editValor.getText().toString().trim();
 
+            // Valida campos
             if (TextUtils.isEmpty(descricao)) {
                 editDescricao.setError("Insere uma descrição");
                 return;
@@ -76,6 +83,7 @@ public class AddDespesaFragment extends Fragment {
                 return;
             }
 
+            // Converte valor para número
             double valor;
             try {
                 valor = Double.parseDouble(valorStr.replace(",", "."));
@@ -84,9 +92,11 @@ public class AddDespesaFragment extends Fragment {
                 return;
             }
 
+            // Obtém categoria e recorrência
             String categoria = spinnerCategoria.getSelectedItem().toString();
             String recorrencia = spinnerRecorrencia.getSelectedItem().toString();
 
+            // Verifica seleções válidas
             if (categoria.equals("Selecione a categoria")) {
                 Toast.makeText(requireContext(), "Escolhe uma categoria!", Toast.LENGTH_SHORT).show();
                 return;
@@ -96,7 +106,7 @@ public class AddDespesaFragment extends Fragment {
                 return;
             }
 
-            // ✅ Agora guarda a despesa na base de dados com o DAO
+            // Cria nova despesa
             Despesa nova = new Despesa(
                     descricao,
                     categoria,
@@ -105,13 +115,14 @@ public class AddDespesaFragment extends Fragment {
                     recorrencia
             );
 
+            // Insere na base de dados
             DespesaDAO dao = new DespesaDAO(requireContext());
             long idInserido = dao.inserir(nova);
             dao.fechar();
 
+            // Mostra resultado
             if (idInserido != -1) {
                 Toast.makeText(requireContext(), "Despesa guardada com sucesso!", Toast.LENGTH_SHORT).show();
-
                 editDescricao.setText("");
                 editValor.setText("");
                 spinnerCategoria.setSelection(0);

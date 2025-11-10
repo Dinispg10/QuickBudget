@@ -8,15 +8,15 @@ import android.database.sqlite.SQLiteDatabase;
 public class BudgetDAO {
     private final SQLiteDatabase db;
 
+    // Abre ligação à base de dados
     public BudgetDAO(Context ctx) {
         DBHelper helper = new DBHelper(ctx);
         db = helper.getWritableDatabase();
     }
 
-    // Define (ou substitui) o orçamento da semana atual
+    // Guarda ou substitui o orçamento da semana
     public void setBudget(double valor, long ignoredStartOfWeek) {
-        // Garante que grava sempre o início da semana correta
-        long startOfWeek = DateUtils.getWeekStartMillis();
+        long startOfWeek = DateUtils.getWeekStartMillis(); // início da semana
 
         ContentValues values = new ContentValues();
         values.put(DBHelper.COLUMN_WEEK_START, startOfWeek);
@@ -25,13 +25,10 @@ public class BudgetDAO {
         db.insertWithOnConflict(DBHelper.TABLE_BUDGET, null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
-    // Obtém o orçamento atual; se não existir, copia o anterior
+    // Obtém o orçamento da semana atual ou cria se não existir
     public double getOrCreateBudgetAtual(long startOfWeek) {
         Double existente = getBudgetValor(startOfWeek);
-
-        if (existente != null) {
-            return existente;
-        }
+        if (existente != null) return existente;
 
         Double anterior = getUltimoBudgetAntes(startOfWeek);
         if (anterior != null) {
@@ -43,13 +40,13 @@ public class BudgetDAO {
         return 0.0;
     }
 
-    // Lê orçamento sem criar nada
+    // Lê orçamento de uma semana (sem criar)
     public double getBudgetPorSemana(long startOfWeek) {
         Double existente = getBudgetValor(startOfWeek);
         return existente != null ? existente : 0.0;
     }
 
-    // Obtém o valor do orçamento de uma semana
+    // Busca valor do orçamento guardado para uma semana
     private Double getBudgetValor(long startOfWeek) {
         Cursor c = db.query(
                 DBHelper.TABLE_BUDGET,
@@ -67,7 +64,7 @@ public class BudgetDAO {
         return valor;
     }
 
-    // Procura o último orçamento anterior à semana atual
+    // Busca o orçamento mais recente antes da semana atual
     private Double getUltimoBudgetAntes(long startOfWeek) {
         Cursor c = db.query(
                 DBHelper.TABLE_BUDGET,
@@ -87,6 +84,7 @@ public class BudgetDAO {
         return valor;
     }
 
+    // Fecha ligação à base de dados
     public void fechar() {
         db.close();
     }

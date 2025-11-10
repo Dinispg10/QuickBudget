@@ -13,19 +13,29 @@ import java.util.List;
 import java.util.Locale;
 
 public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
-    public interface OnItemClick { void onClick(Despesa despesa); }
-    private final List<Despesa> items = new ArrayList<>();
-    private final OnItemClick onItemClick;
 
+    // Interface para clique em item
+    public interface OnItemClick { void onClick(Despesa despesa); }
+
+    private final List<Despesa> items = new ArrayList<>(); // lista de despesas
+    private final OnItemClick onItemClick; // listener de clique
+
+    // Construtor simples
     public DespesaAdapter(List<Despesa> despesas) { this(despesas, null); }
+
+    // Construtor completo com listener
     public DespesaAdapter(List<Despesa> despesas, OnItemClick click) {
         if (despesas != null) items.addAll(despesas);
         this.onItemClick = click;
     }
+
+    // Atualiza lista de despesas
     public void setItems(List<Despesa> novas) {
         items.clear();
         if (novas != null) items.addAll(novas);
     }
+
+    // Cria cada item da lista
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -33,6 +43,8 @@ public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
                 .inflate(R.layout.item_despesa, parent, false);
         return new VH(v);
     }
+
+    // Liga os dados da despesa aos elementos visuais
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         Despesa d = items.get(position);
@@ -40,13 +52,21 @@ public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
         holder.tvValor.setText(String.format(Locale.getDefault(), "€%.2f", d.getValor()));
         holder.tvCategoria.setText(d.getCategoria());
         holder.tvData.setText(DateUtils.formatDate(d.getTimestamp()));
+
+        // Clique no item
         holder.itemView.setOnClickListener(v -> {
             if (onItemClick != null) onItemClick.onClick(d);
         });
     }
-    @Override public int getItemCount() { return items.size(); }
+
+    // Retorna quantidade de itens
+    @Override
+    public int getItemCount() { return items.size(); }
+
+    // Classe interna que representa um item (ViewHolder)
     static class VH extends RecyclerView.ViewHolder {
         TextView tvDesc, tvValor, tvCategoria, tvData;
+
         VH(View itemView) {
             super(itemView);
             tvDesc = itemView.findViewById(R.id.tvDesc);

@@ -7,8 +7,6 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.Calendar;
-
 public class MainActivity extends AppCompatActivity {
 
     private Fragment dashboardFragment;
@@ -20,22 +18,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 💰 Garante que o orçamento da semana atual existe (ou é copiado da anterior)
+
+
+        // Garante que existe orçamento da semana atual
         long inicioSemana = DateUtils.getWeekStartMillis();
         BudgetDAO bdao = new BudgetDAO(this);
         bdao.getOrCreateBudgetAtual(inicioSemana);
         bdao.fechar();
 
-        // 🌀 Verificar despesas recorrentes (semanal/mensal)
+        // Cria despesas recorrentes se necessário
         verificarDespesasRecorrentes();
 
-        // ⚙️ Configurar o menu inferior
+        // Configura o menu inferior
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
+        // Inicializa fragments
         dashboardFragment = new DashboardFragment();
         addDespesaFragment = new AddDespesaFragment();
         historicoFragment = new HistoricoFragment();
 
+        // Define comportamento dos botões do menu
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selected = null;
             int id = item.getItemId();
@@ -57,16 +59,13 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Abre por defeito o Dashboard
+        // Abre o Dashboard por defeito
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.menu_dashboard);
         }
     }
 
-    /**
-     * 🌀 Cria automaticamente despesas recorrentes (Semanal / Mensal)
-     * caso ainda não existam para o período atual.
-     */
+    // Cria automaticamente despesas recorrentes (Semanal / Mensal)
     private void verificarDespesasRecorrentes() {
         long inicioSemana = DateUtils.getWeekStartMillis();
         DespesaDAO dao = new DespesaDAO(this);
