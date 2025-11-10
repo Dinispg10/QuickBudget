@@ -35,13 +35,26 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * DashboardFragment
+ * -----------------
+ * Fragment principal da aplicação.
+ * Mostra o resumo semanal do utilizador, incluindo:
+ *  - Despesas recentes
+ *  - Progresso do orçamento semanal
+ *  - Distribuição de gastos por categoria (gráfico de pizza)
+ *  - Possibilidade de atualizar o valor do orçamento
+ *
+ * Atualiza automaticamente os dados após edições, exclusões ou inserções.
+ */
 public class DashboardFragment extends Fragment implements DetalheDespesaDialogFragment.OnDespesaAlteradaListener {
 
-    // Variáveis da interface
+    // Elementos da interface
     private RecyclerView rvRecentExpenses;
     private DespesaAdapter adapter;
     private PieChart pieChart;
-    private TextView tvWeekSummary, tvProgressDetail, tvTotalSpent, tvWeeklyBudget, tvBudgetRemaining, tvLeftOf, tvAvgDay;
+    private TextView tvWeekSummary, tvProgressDetail, tvTotalSpent, tvWeeklyBudget,
+            tvBudgetRemaining, tvLeftOf, tvAvgDay;
     private ProgressBar progressBar;
     private EditText editNewBudget;
     private Button buttonUpdateBudget;
@@ -70,7 +83,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         // Mostra intervalo da semana atual
         tvWeekSummary.setText("Resumo da semana (" + DateUtils.getCurrentWeekRangeString() + ")");
 
-        // Botão de sair
+        // Botão de saída com confirmação
         ImageButton buttonExit = view.findViewById(R.id.buttonExit);
         buttonExit.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
                 .setTitle("Sair")
@@ -84,13 +97,19 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         setupPieChart();
         setupBudgetUpdate();
 
-        // Atualiza dados
+        // Atualiza todos os dados iniciais
         refreshAll();
 
         return view;
     }
 
-    // Atualiza lista de despesas recentes
+    // Configura o RecyclerView das despesas recentes
+    private void setupRecyclerView() {
+        rvRecentExpenses.setHasFixedSize(true);
+        rvRecentExpenses.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
+
+    // Atualiza lista de despesas da semana atual (mostra as 2 mais recentes)
     private void atualizarDespesasRecentes() {
         DespesaDAO dao = new DespesaDAO(requireContext());
         long inicioSemana = DateUtils.getWeekStartMillis();
@@ -99,7 +118,6 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         List<Despesa> todas = dao.listarTodas();
         dao.fechar();
 
-        // Filtra despesas da semana atual
         List<Despesa> semana = new ArrayList<>();
         for (Despesa d : todas) {
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
@@ -107,17 +125,13 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // Ordena por data
+        // Ordena por data decrescente e limita a 2 resultados
         semana.sort((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()));
-
-        // Mostra no máximo 2
         List<Despesa> recentes = semana.size() > 2 ? semana.subList(0, 2) : semana;
 
-        // Configura adapter
         if (adapter == null) {
             adapter = new DespesaAdapter(recentes, despesa -> {
-                DetalheDespesaDialogFragment dialog =
-                        DetalheDespesaDialogFragment.nova(despesa.getId());
+                DetalheDespesaDialogFragment dialog = DetalheDespesaDialogFragment.nova(despesa.getId());
                 dialog.setOnDespesaAlteradaListener(this);
                 dialog.show(getParentFragmentManager(), "DetalheDespesa");
             });
@@ -126,18 +140,10 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             adapter.notifyDataSetChanged();
         }
 
-        if (rvRecentExpenses.getAdapter() != adapter) {
-            rvRecentExpenses.setAdapter(adapter);
-        }
+        if (rvRecentExpenses.getAdapter() != adapter) rvRecentExpenses.setAdapter(adapter);
     }
 
-    // Configuração do RecyclerView
-    private void setupRecyclerView() {
-        rvRecentExpenses.setHasFixedSize(true);
-        rvRecentExpenses.setLayoutManager(new LinearLayoutManager(getContext()));
-    }
-
-    // Atualiza orçamento semanal
+    // Configura o campo e botão para alterar o orçamento semanal
     private void setupBudgetUpdate() {
         buttonUpdateBudget.setOnClickListener(v -> {
             String valueStr = editNewBudget.getText().toString().trim();
@@ -154,7 +160,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
                 bdao.setBudget(valor, inicioSemana);
                 bdao.fechar();
 
-                refreshAll();
+                refreshAll(); // atualiza após guardar
                 editNewBudget.setText("");
             } catch (NumberFormatException ignored) {
                 editNewBudget.setError("Valor de orçamento inválido!");
@@ -162,7 +168,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         });
     }
 
-    // Configuração inicial do gráfico
+    // Configura o gráfico de pizza (layout e legenda)
     private void setupPieChart() {
         pieChart.getDescription().setEnabled(false);
         pieChart.setUsePercentValues(true);
@@ -175,9 +181,8 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         legend.setDrawInside(false);
     }
 
-    // Atualiza todos os dados da semana
+    // Atualiza todos os dados da semana (lista, totais, gráfico)
     public void refreshAll() {
-        // Carrega despesas
         DespesaDAO ddao = new DespesaDAO(requireContext());
         List<Despesa> despesas = ddao.listarTodas();
         ddao.fechar();
@@ -185,11 +190,10 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         double total = 0.0;
         Map<String, Double> gastosPorCategoria = new HashMap<>();
 
-        // Intervalo da semana atual
         long inicioSemana = DateUtils.getWeekStartMillis();
         long fimSemana = DateUtils.getWeekEndMillis();
 
-        // Filtra e soma
+        // Filtra despesas da semana e soma valores
         List<Despesa> semana = new ArrayList<>();
         for (Despesa d : despesas) {
             if (d.getTimestamp() >= inicioSemana && d.getTimestamp() <= fimSemana) {
@@ -202,10 +206,8 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // Atualiza lista
+        // Atualiza lista e orçamento
         atualizarDespesasRecentes();
-
-        // Lê orçamento
         BudgetDAO bdao = new BudgetDAO(requireContext());
         double budget = bdao.getBudgetPorSemana(inicioSemana);
         bdao.fechar();
@@ -213,13 +215,12 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         double restante = budget - total;
         double mediaPorDia = total / 7.0;
 
-        // Atualiza textos
+        // Atualiza textos e cores de estado
         tvAvgDay.setText(String.format(Locale.getDefault(), "€%.2f", mediaPorDia));
         tvWeeklyBudget.setText(String.format("Orçamento semanal atual: €%.2f", budget));
         tvTotalSpent.setText(String.format("€%.2f", total));
         tvBudgetRemaining.setText(String.format("€%.2f", restante));
 
-        // Cores do orçamento
         if (restante < 0) {
             tvBudgetRemaining.setTextColor(Color.parseColor("#E74C3C"));
             tvLeftOf.setText(String.format("Excedeu o orçamento de €%.2f", budget));
@@ -228,12 +229,11 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             tvLeftOf.setText(String.format("Restante de €%.2f", budget));
         }
 
-        // Barra de progresso
+        // Atualiza barra de progresso com animação
         double percent = (budget > 0) ? (total / budget) * 100.0 : 0.0;
         int clampedProgress = (int) Math.min(percent, 100);
 
         tvProgressDetail.setText(String.format(Locale.getDefault(), "%.0f%%", percent));
-
         int corProgresso = percent > 100 ? Color.parseColor("#E74C3C") : Color.parseColor("#3FA4CE");
         int corFundo = Color.parseColor("#E0E0E0");
 
@@ -244,17 +244,17 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         animation.setDuration(800);
         animation.start();
 
-        // Gráfico de pizza
+        // Monta gráfico de pizza
         List<PieEntry> entries = new ArrayList<>();
         List<Integer> cores = new ArrayList<>();
 
-        // Cria fatias
         for (Map.Entry<String, Double> e : gastosPorCategoria.entrySet()) {
             entries.add(new PieEntry(e.getValue().floatValue(), e.getKey()));
 
             String chave = Normalizer.normalize(e.getKey().toLowerCase(), Normalizer.Form.NFD)
                     .replaceAll("[^\\p{ASCII}]", "");
 
+            // Define cor por categoria
             switch (chave) {
                 case "alimentacao": cores.add(Color.parseColor("#E53935")); break;
                 case "transporte": cores.add(Color.parseColor("#1E88E5")); break;
@@ -269,7 +269,6 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
             }
         }
 
-        // Cria dataset
         PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setColors(cores);
         dataSet.setValueTextSize(13f);
@@ -279,7 +278,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        // Aparência do gráfico
+        // Configuração visual do gráfico
         pieChart.setDrawEntryLabels(false);
         pieChart.setUsePercentValues(false);
         pieChart.getDescription().setEnabled(false);
@@ -288,7 +287,7 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         pieChart.setTransparentCircleRadius(55f);
         pieChart.setHoleRadius(45f);
 
-        // Legenda
+        // Legenda inferior
         Legend legenda = pieChart.getLegend();
         legenda.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         legenda.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
@@ -299,22 +298,19 @@ public class DashboardFragment extends Fragment implements DetalheDespesaDialogF
         legenda.setXEntrySpace(10f);
         legenda.setYEntrySpace(5f);
 
-        // Margem inferior
         pieChart.setExtraOffsets(0, 0, 0, 10);
-
-        // Animação
         pieChart.animateY(1000, Easing.EaseInOutQuad);
         pieChart.invalidate();
     }
 
-    // Atualiza quando volta ao fragmento
+    // Atualiza lista ao regressar ao fragmento
     @Override
     public void onResume() {
         super.onResume();
         atualizarDespesasRecentes();
     }
 
-    // Listener de alteração
+    // Atualiza tudo quando uma despesa é alterada (editar/eliminar)
     @Override
     public void onDespesaAlterada() {
         refreshAll();

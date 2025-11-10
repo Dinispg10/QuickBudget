@@ -6,14 +6,33 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * DateUtils
+ * ----------
+ * Classe utilitária para manipulação e formatação de datas no contexto da aplicação.
+ * Fornece métodos para:
+ *  - Calcular o início e fim da semana atual
+ *  - Gerar intervalos semanais em texto
+ *  - Criar rótulos de semanas anteriores
+ *  - Formatar datas para exibição
+ */
 public class DateUtils {
 
-    // Formata data no formato "dd MMM yyyy"
+    /**
+     * Formata uma data (timestamp em milissegundos)
+     * para o formato legível "dd MMM yyyy".
+     *
+     * @param millis timestamp a converter
+     * @return string com a data formatada
+     */
     public static String formatDate(long millis) {
         return new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(millis);
     }
 
-    // Retorna intervalo da semana atual em texto (ex: "03 - 09 Nov")
+    /**
+     * Retorna o intervalo textual da semana atual.
+     * Exemplo: "04 - 10 Nov".
+     */
     public static String getCurrentWeekRangeString() {
         Calendar start = getWeekStartCalendar();
         Calendar end = (Calendar) start.clone();
@@ -27,7 +46,13 @@ public class DateUtils {
         return sdf.format(start.getTime()) + " - " + sdf.format(end.getTime());
     }
 
-    // Gera lista de rótulos das últimas N semanas
+    /**
+     * Gera uma lista de rótulos representando as últimas N semanas.
+     * Cada rótulo segue o formato "dd MMM - dd MMM".
+     *
+     * @param n número de semanas a incluir
+     * @return lista de strings com os intervalos semanais
+     */
     public static List<String> getLastWeeksLabels(int n) {
         List<String> labels = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", Locale.getDefault());
@@ -39,12 +64,18 @@ public class DateUtils {
         return labels;
     }
 
-    // Retorna o início da semana atual (segunda-feira 00:00)
+    /**
+     * Retorna o timestamp correspondente ao início da semana atual
+     * (segunda-feira às 00:00).
+     */
     public static long getWeekStartMillis() {
         return getWeekStartCalendar().getTimeInMillis();
     }
 
-    // Retorna o fim da semana atual (domingo 23:59)
+    /**
+     * Retorna o timestamp do fim da semana atual
+     * (domingo às 23:59:59).
+     */
     public static long getWeekEndMillis() {
         Calendar cal = getWeekStartCalendar();
         cal.add(Calendar.DAY_OF_MONTH, 6);
@@ -55,7 +86,10 @@ public class DateUtils {
         return cal.getTimeInMillis();
     }
 
-    // Cria calendário no início da semana (segunda-feira)
+    /**
+     * Cria um objeto Calendar ajustado para o início da semana atual.
+     * Define segunda-feira como o primeiro dia da semana.
+     */
     private static Calendar getWeekStartCalendar() {
         Calendar cal = Calendar.getInstance(Locale.getDefault());
         cal.setFirstDayOfWeek(Calendar.MONDAY);
@@ -67,7 +101,13 @@ public class DateUtils {
         return cal;
     }
 
-    // Retorna início e fim da semana com base num deslocamento
+    /**
+     * Calcula o início e fim de uma semana com base num deslocamento
+     * (positivo ou negativo) em relação à semana atual.
+     *
+     * @param offsetWeeks número de semanas a deslocar (ex: -1 = semana passada)
+     * @return array com dois timestamps: [início, fim]
+     */
     public static long[] getWeekRangeFromNowOffset(int offsetWeeks) {
         Calendar start = getWeekStartCalendar();
         start.add(Calendar.WEEK_OF_YEAR, offsetWeeks);
@@ -80,10 +120,5 @@ public class DateUtils {
         end.set(Calendar.MILLISECOND, 999);
 
         return new long[]{start.getTimeInMillis(), end.getTimeInMillis()};
-    }
-
-    // Verifica se um timestamp está dentro da semana atual
-    public static boolean isInCurrentWeek(long timestamp) {
-        return timestamp >= getWeekStartMillis() && timestamp <= getWeekEndMillis();
     }
 }

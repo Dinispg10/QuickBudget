@@ -7,6 +7,14 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+/**
+ * MainActivity
+ * ------------
+ * Atividade principal da aplicação.
+ * Responsável por inicializar a base de dados, verificar despesas recorrentes
+ * e gerir a navegação entre os fragmentos (Dashboard, Adicionar e Histórico)
+ * através do menu inferior.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private Fragment dashboardFragment;
@@ -18,26 +26,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
-        // Garante que existe orçamento da semana atual
+        // Garante que existe um orçamento para a semana atual
         long inicioSemana = DateUtils.getWeekStartMillis();
         BudgetDAO bdao = new BudgetDAO(this);
         bdao.getOrCreateBudgetAtual(inicioSemana);
         bdao.fechar();
 
-        // Cria despesas recorrentes se necessário
+        // Gera automaticamente despesas recorrentes (semanal/mensal)
         verificarDespesasRecorrentes();
 
-        // Configura o menu inferior
+        // Configura o menu inferior (BottomNavigationView)
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
-        // Inicializa fragments
+        // Inicializa fragmentos principais
         dashboardFragment = new DashboardFragment();
         addDespesaFragment = new AddDespesaFragment();
         historicoFragment = new HistoricoFragment();
 
-        // Define comportamento dos botões do menu
+        // Define comportamento do menu inferior
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selected = null;
             int id = item.getItemId();
@@ -65,7 +71,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Cria automaticamente despesas recorrentes (Semanal / Mensal)
+    /**
+     * Cria automaticamente as despesas recorrentes (semanais/mensais)
+     * caso ainda não existam para o período atual.
+     */
     private void verificarDespesasRecorrentes() {
         long inicioSemana = DateUtils.getWeekStartMillis();
         DespesaDAO dao = new DespesaDAO(this);

@@ -7,7 +7,7 @@
       </SelectionState>
       <SelectionState runConfigName="QuickBudget">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-11-09T20:18:31.798144Z">
+        <DropdownSelection timestamp="2025-11-10T21:22:05.753708400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Utilizador\.android\avd\Medium_Phone.avd" />

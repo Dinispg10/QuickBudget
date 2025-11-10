@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:background="#F9FAFB">
 
-    <!-- 🔹 Toolbar -->
+    <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_dashboard"
         android:layout_width="match_parent"
@@ -44,7 +44,7 @@
             android:layout_marginEnd="0dp" />
     </androidx.appcompat.widget.Toolbar>
 
-    <!-- 🔹 Conteúdo principal -->
+    <!-- Conteúdo principal -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- 📦 Cartão principal -->
+            <!--  Cartão principal -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -70,7 +70,7 @@
                     android:orientation="vertical"
                     android:padding="18dp">
 
-                    <!-- 🔸 Cabeçalho -->
+                    <!-- Cabeçalho -->
                     <TextView
                         android:id="@+id/textViewWeekSummary"
                         android:layout_width="wrap_content"
@@ -80,7 +80,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <!-- 🔸 Valor principal -->
+                    <!-- Valor principal -->
                     <TextView
                         android:id="@+id/textViewBudgetRemaining"
                         android:layout_width="wrap_content"
@@ -100,7 +100,7 @@
                         android:textColor="#000000"
                         android:textSize="14sp" />
 
-                    <!-- 🔸 Barra de progresso -->
+                    <!-- Barra de progresso -->
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="40dp"
@@ -118,7 +118,7 @@
                             android:progressDrawable="@drawable/progress_bar_budget"
                             android:clipToOutline="true" />
 
-                        <!-- Percentagem centrada dentro da barra -->
+
                         <TextView
                             android:id="@+id/textViewProgressDetail"
                             android:layout_width="match_parent"
@@ -130,7 +130,7 @@
                             android:textSize="15sp" />
                     </FrameLayout>
 
-                    <!-- 🔸 Totais -->
+                    <!-- Totais -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -188,7 +188,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- 🔹 Secção orçamento -->
+            <!-- Secção orçamento -->
             <TextView
                 android:id="@+id/textWeeklyBudgetLabel"
                 android:layout_width="wrap_content"
@@ -231,7 +231,7 @@
                 android:layout_gravity="start"
                 android:fontFamily="sans-serif-medium" />
 
-            <!-- 🔹 Secção gastos recentes -->
+            <!-- Secção gastos recentes -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -249,7 +249,7 @@
                 android:padding="8dp"
                 android:background="#F6F6F6" />
 
-            <!-- 🔹 Gráfico -->
+            <!-- Gráfico -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -1,5 +1,13 @@
 package com.example.quickbudget;
 
+/**
+ * Despesa
+ * --------
+ * Classe modelo que representa uma despesa registada na aplicação.
+ * Contém os dados principais: descrição, valor, categoria, recorrência e data.
+ * É utilizada para armazenar e manipular despesas dentro da aplicação e na base de dados.
+ */
+
 public class Despesa {
 
     // Campos da despesa
@@ -31,6 +39,7 @@ public class Despesa {
 
     // Getters e Setters
     public int getId() { return id; }
+
     public void setId(int id) { this.id = id; }
 
     public String getDescricao() { return descricao; }

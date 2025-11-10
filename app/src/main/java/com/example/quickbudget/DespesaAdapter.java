@@ -12,30 +12,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * DespesaAdapter
+ * ---------------
+ * Adapter responsável por exibir a lista de despesas num RecyclerView.
+ * Cada item mostra a descrição, categoria, valor e data da despesa.
+ * Permite interação através de um listener de clique (para abrir/editar detalhes).
+ */
 public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
 
-    // Interface para clique em item
-    public interface OnItemClick { void onClick(Despesa despesa); }
+    // Interface de callback para cliques em despesas
+    public interface OnItemClick {
+        void onClick(Despesa despesa);
+    }
 
-    private final List<Despesa> items = new ArrayList<>(); // lista de despesas
-    private final OnItemClick onItemClick; // listener de clique
+    private final List<Despesa> items = new ArrayList<>();
+    private final OnItemClick onItemClick;
 
-    // Construtor simples
-    public DespesaAdapter(List<Despesa> despesas) { this(despesas, null); }
-
-    // Construtor completo com listener
+    // Construtor principal
     public DespesaAdapter(List<Despesa> despesas, OnItemClick click) {
         if (despesas != null) items.addAll(despesas);
         this.onItemClick = click;
     }
 
-    // Atualiza lista de despesas
+    // Substitui a lista de despesas por uma nova
     public void setItems(List<Despesa> novas) {
         items.clear();
         if (novas != null) items.addAll(novas);
     }
 
-    // Cria cada item da lista
+    // Cria a estrutura visual (ViewHolder) para cada item
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -44,26 +50,29 @@ public class DespesaAdapter extends RecyclerView.Adapter<DespesaAdapter.VH> {
         return new VH(v);
     }
 
-    // Liga os dados da despesa aos elementos visuais
+    // Liga os dados da despesa aos elementos visuais do layout
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         Despesa d = items.get(position);
+
         holder.tvDesc.setText(d.getDescricao());
         holder.tvValor.setText(String.format(Locale.getDefault(), "€%.2f", d.getValor()));
         holder.tvCategoria.setText(d.getCategoria());
         holder.tvData.setText(DateUtils.formatDate(d.getTimestamp()));
 
-        // Clique no item
+        // Listener para clique no item → abre detalhe
         holder.itemView.setOnClickListener(v -> {
             if (onItemClick != null) onItemClick.onClick(d);
         });
     }
 
-    // Retorna quantidade de itens
+    // Retorna o número total de despesas exibidas
     @Override
-    public int getItemCount() { return items.size(); }
+    public int getItemCount() {
+        return items.size();
+    }
 
-    // Classe interna que representa um item (ViewHolder)
+    // Classe ViewHolder que contém as views de um item da lista
     static class VH extends RecyclerView.ViewHolder {
         TextView tvDesc, tvValor, tvCategoria, tvData;
 

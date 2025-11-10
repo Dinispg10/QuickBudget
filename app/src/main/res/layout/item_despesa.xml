@@ -10,7 +10,7 @@
         android:id="@+id/tvDesc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Expense description"
+        android:text="Descrição Despesa"
         android:textStyle="bold"
         android:textSize="16sp"
         android:layout_marginBottom="4dp"/>
@@ -24,7 +24,7 @@
             android:id="@+id/tvCategoria"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Category"
+            android:text="Categoria"
             android:textSize="14sp"
             android:textColor="#666" />
 

@@ -17,16 +17,25 @@ import androidx.fragment.app.DialogFragment;
 
 import java.util.Arrays;
 
+/**
+ * DetalheDespesaDialogFragment
+ * -----------------------------
+ * Fragmento de diálogo para editar ou eliminar uma despesa existente.
+ * Permite atualizar a descrição, valor, categoria e recorrência,
+ * e comunica alterações ao fragmento principal através de um listener.
+ */
 public class DetalheDespesaDialogFragment extends DialogFragment {
 
-    // Interface para atualizar a lista após editar
-    public interface OnDespesaAlteradaListener { void onDespesaAlterada(); }
+    /** Interface callback para atualizar a lista após edição ou remoção */
+    public interface OnDespesaAlteradaListener {
+        void onDespesaAlterada();
+    }
 
-    private OnDespesaAlteradaListener listener; // listener do callback
-    private static final String ARG_ID = "arg_id"; // argumento com o ID da despesa
-    private Despesa despesa; // despesa atual
+    private OnDespesaAlteradaListener listener;
+    private static final String ARG_ID = "arg_id"; // ID da despesa a editar
+    private Despesa despesa; // Objeto despesa atual
 
-    // Cria nova instância do diálogo com o ID da despesa
+    // Cria uma nova instância do diálogo com o ID da despesa
     public static DetalheDespesaDialogFragment nova(int idDespesa) {
         DetalheDespesaDialogFragment f = new DetalheDespesaDialogFragment();
         Bundle b = new Bundle();
@@ -35,12 +44,12 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
         return f;
     }
 
-    // Define o listener externo
+    // Define o listener de atualização
     public void setOnDespesaAlteradaListener(OnDespesaAlteradaListener l) {
         this.listener = l;
     }
 
-    // Cria o diálogo
+    // Criação do diálogo de detalhe
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -53,7 +62,7 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
         Spinner spinnerCategoria = view.findViewById(R.id.spinnerEditCategoria);
         Spinner spinnerRecorrencia = view.findViewById(R.id.spinnerEditRecorrencia);
 
-        // Configura os spinners
+        // Configuração dos spinners
         String[] categorias = getResources().getStringArray(R.array.categorias_array);
         String[] recs = getResources().getStringArray(R.array.tipos_recorrencia);
 
@@ -75,21 +84,19 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
             dao.fechar();
         }
 
-        // Preenche os campos com os dados da despesa
+        // Preenche os campos com os dados existentes
         if (despesa != null) {
             editDescricao.setText(despesa.getDescricao());
             editValor.setText(String.valueOf(despesa.getValor()));
 
             int catIndex = Arrays.asList(categorias).indexOf(despesa.getCategoria());
-            if (catIndex < 0) catIndex = 0;
-            spinnerCategoria.setSelection(catIndex);
+            spinnerCategoria.setSelection(Math.max(catIndex, 0));
 
             int recIndex = Arrays.asList(recs).indexOf(despesa.getRecorrencia());
-            if (recIndex < 0) recIndex = 0;
-            spinnerRecorrencia.setSelection(recIndex);
+            spinnerRecorrencia.setSelection(Math.max(recIndex, 0));
         }
 
-        // Cria o diálogo com os botões
+        // Cria o diálogo base
         AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Detalhe da despesa")
                 .setView(view)
@@ -99,11 +106,12 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                 .setNeutralButton("Eliminar", null)
                 .create();
 
+        // Configuração dos botões após mostrar o diálogo
         dialog.setOnShowListener(d -> {
             Button btnGuardar = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             Button btnEliminar = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
 
-            // 🟢 Guardar alterações
+            // Guardar alterações
             btnGuardar.setOnClickListener(v -> {
                 if (despesa == null) {
                     editDescricao.setError("Despesa não encontrada");
@@ -113,6 +121,7 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                 String desc = editDescricao.getText().toString().trim();
                 String valorStr = editValor.getText().toString().trim();
 
+                // Valida campos
                 if (TextUtils.isEmpty(desc)) {
                     editDescricao.setError("Descrição obrigatória");
                     return;
@@ -131,6 +140,7 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                     return;
                 }
 
+                // Atualiza dados no objeto
                 String categoria = spinnerCategoria.getSelectedItem().toString();
                 String recorrencia = spinnerRecorrencia.getSelectedItem().toString();
 
@@ -140,19 +150,18 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                 despesa.setRecorrencia(recorrencia);
                 despesa.setTimestamp(System.currentTimeMillis());
 
-                // Atualizar na BD
+                // Atualiza na base de dados
                 DespesaDAO dao = new DespesaDAO(requireContext());
                 dao.atualizar(despesa);
                 dao.fechar();
 
-                // ✅ Mostra mensagem de sucesso
                 Toast.makeText(requireContext(), "Despesa atualizada!", Toast.LENGTH_SHORT).show();
 
                 if (listener != null) listener.onDespesaAlterada();
                 dialog.dismiss();
             });
 
-            // 🔴 Eliminar despesa (com confirmação)
+            // Eliminar despesa (com confirmação)
             btnEliminar.setOnClickListener(v -> {
                 if (despesa != null) {
                     new AlertDialog.Builder(requireContext())
@@ -164,7 +173,6 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                                 dao.eliminar(despesa.getId());
                                 dao.fechar();
 
-                                // ✅ Mostra mensagem de sucesso
                                 Toast.makeText(requireContext(), "Despesa eliminada!", Toast.LENGTH_SHORT).show();
 
                                 if (listener != null) listener.onDespesaAlterada();
@@ -174,7 +182,6 @@ public class DetalheDespesaDialogFragment extends DialogFragment {
                 }
             });
         });
-
 
         return dialog;
     }
